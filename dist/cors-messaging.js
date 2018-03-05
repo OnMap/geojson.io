@@ -5,6 +5,12 @@ const ALLOWED_HOSTS = [
     'https://dev-dumbledore.onmap.co.il'
 ];
 
+const MAP_API_ACTIONS = [
+    'setZoom',
+    'setLatLng',
+    'setView'
+];
+
 function isAllowed(event) {
     return ALLOWED_HOSTS.indexOf(event.origin) !== -1;
 }
@@ -14,11 +20,11 @@ window.addEventListener('message', function(event) {
         return;
     }
     
-    const { action, params } = event.data;
+    const { action, params, getResult = false } = event.data;
 
     const actions = Object.keys(window.api.data).filter(key => typeof window.api.data[key] === 'function');
 
-    if (actions.indexOf(action) === -1) {
+    if (actions.indexOf(action) === -1 && MAP_API_ACTIONS.indexOf(action) === -1) {
         console.log(`Not supported map API action: "${action}"`);
         return;
     }
@@ -28,9 +34,14 @@ window.addEventListener('message', function(event) {
     let error = null;
     
     try {
-        result = window.api.data[action](...params);
+        const apiPart = (!window.api.data[action]) ? 'map' : 'data';
+        const exec = window.api[apiPart][action].bind(window.api[apiPart]);
+        result = exec(...params);
+        if (!getResult) {
+            result = null;
+        }
     } catch (err) {
-        error = err;
+        error = err.message || JSON.stringify(err);
     }
     parent && parent.postMessage({ action, result, error }, '*');
 });

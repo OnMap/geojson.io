@@ -8,18 +8,19 @@ const ALLOWED_HOSTS = [
 const MAP_API_ACTIONS = [
     'setZoom',
     'setLatLng',
-    'setView'
+    'setView',
+    'fitBounds'
 ];
 
 function isAllowed(event) {
     return ALLOWED_HOSTS.indexOf(event.origin) !== -1;
 }
 
-window.addEventListener('message', function(event) {     
+window.addEventListener('message', function (event) {
     if (!isAllowed(event)) {
         return;
     }
-    
+
     const { action, params, getResult = false } = event.data;
 
     const actions = Object.keys(window.api.data).filter(key => typeof window.api.data[key] === 'function');
@@ -32,7 +33,7 @@ window.addEventListener('message', function(event) {
     // console.log((params.length) ? `Running ${action} with ${params.length} params (${params})` : `Running ${action}`);
     let result = null;
     let error = null;
-    
+
     try {
         const apiPart = (!window.api.data[action]) ? 'map' : 'data';
         const exec = window.api[apiPart][action].bind(window.api[apiPart]);
